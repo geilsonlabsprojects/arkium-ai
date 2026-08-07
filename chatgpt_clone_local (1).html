@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Local IA</title>
+    
+    <!-- Tailwind CSS para estilização rápida -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Marked.js para renderizar Markdown na resposta -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Highlight.js para destaque de sintaxe em blocos de código -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- Font Awesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* Estilos personalizados para complementar o Tailwind */
+        body {
+            background-color: #343541; /* Cor de fundo escura clássica */
+            color: #ececf1;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Área de mensagens */
+        .chat-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        /* Estilo das mensagens */
+        .message {
+            padding: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            max-width: 48rem; /* max-w-3xl */
+            margin: 0 auto;
+        }
+
+        .message.user {
+            /* Sem fundo diferente para o usuário no design mais recente, mas mantendo distinção */
+        }
+
+        .message.assistant {
+            background-color: rgba(68, 70, 84, 0.5); /* Leve destaque para o bot */
+        }
+
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-weight: bold;
+        }
+
+        .avatar-user { background-color: #10a37f; } /* Verde OpenAI */
+        .avatar-assistant { background-color: #19c37d; }
+
+        .content {
+            width: 100%;
+            overflow-wrap: break-word;
+            line-height: 1.6;
+        }
+
+        /* Estilização específica do Markdown (Marked.js) */
+        .content pre {
+            background-color: #1e1e1e !important;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .content code {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: rgba(255,255,255,0.1);
+            padding: 0.1rem 0.3rem;
+            border-radius: 0.25rem;
+            font-size: 0.9em;
+        }
+        .content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .content p { margin-bottom: 0.5rem; }
+        .content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.5rem; }
+        .content ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 0.5rem; }
+        .content a { color: #3b82f6; text-decoration: underline; }
+
+        /* Cursor de digitação durante o streaming */
+        .cursor::after {
+            content: '▋';
+            animation: blink 1s step-start infinite;
+            margin-left: 2px;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* Área de input fixa na parte inferior */
+        .input-area {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(180deg, rgba(52,53,65,0) 0%, #343541 50%);
+            padding: 2rem 1rem 1rem 1rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 48rem;
+            background-color: #40414f;
+            border-radius: 0.75rem;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+        }
+
+        textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: white;
+            resize: none;
+            outline: none;
+            max-height: 200px;
+            overflow-y: hidden;
+            padding-right: 2.5rem; /* Espaço para o botão enviar */
+            line-height: 1.5;
+        }
+
+        .send-btn {
+            position: absolute;
+            right: 0.75rem;
+            bottom: 0.75rem;
+            background-color: #19c37d;
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .send-btn:hover { background-color: #10a37f; }
+        .send-btn:disabled { background-color: #555; cursor: not-allowed; color: #888; }
+
+        /* Modal de Configurações */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0,0,0,0.6);
+            z-index: 50;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal {
+            background-color: #202123;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid #444654;
+        }
+        .modal input, .modal select {
+            width: 100%;
+            padding: 0.5rem;
+            margin-top: 0.25rem;
+            margin-bottom: 1rem;
+            background-color: #343541;
+            border: 1px solid #565869;
+            color: white;
+            border-radius: 0.25rem;
+            outline: none;
+        }
+        .modal input:focus, .modal select:focus { border-color: #19c37d; }
+
+        /* Barra superior para configurações */
+        .top-bar {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            padding: 1rem;
+            display: flex;
+            justify-content: flex-end;
+            z-index: 10;
+            background: linear-gradient(180deg, rgba(52,53,65,1) 0%, rgba(52,53,65,0) 100%);
+        }
+        
+        .settings-btn {
+            background: transparent;
+            color: #ececf1;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background 0.2s;
+        }
+        .settings-btn:hover { background-color: rgba(255,255,255,0.1); }
+
+        /* Estado vazio */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Barra Superior -->
+    <div class="top-bar">
+        <button class="settings-btn" onclick="openSettings()">
+            <i class="fas fa-cog"></i> Configurações da API
+        </button>
+    </div>
+
+    <!-- Container Principal do Chat -->
+    <div class="w-full flex flex-col relative h-full">
+        
+        <!-- Área de Mensagens -->
+        <div id="chat-container" class="chat-container pb-32 pt-16">
+            <div id="empty-state" class="empty-state">
+                <h1 class="text-4xl font-bold mb-4 opacity-50">Local IA Chat</h1>
+                <p class="opacity-50 max-w-md">Envie uma mensagem para começar. Certifique-se de configurar a API no botão superior direito.</p>
+            </div>
+            <!-- As mensagens serão injetadas aqui -->
+        </div>
+
+        <!-- Área de Input -->
+        <div class="input-area">
+            <div class="input-wrapper">
+                <textarea 
+                    id="user-input" 
+                    rows="1" 
+                    placeholder="Envie uma mensagem para a IA..." 
+                    oninput="autoResize(this)"
+                    onkeydown="handleKeyDown(event)"></textarea>
+                <button id="send-btn" class="send-btn" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configurações -->
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal">
+            <h2 class="text-xl font-bold mb-4 flex justify-between items-center">
+                Configurações da API Local
+                <button onclick="closeSettings()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+            </h2>
+            
+            <label class="block text-sm font-medium mb-1" for="base-url">Base URL (Endpoint V1)</label>
+            <input type="text" id="base-url" placeholder="http://localhost:8000/v1">
+            
+            <label class="block text-sm font-medium mb-1 mt-2" for="api-key">API Key (Bearer Token)</label>
+            <input type="password" id="api-key" placeholder="ark-SUA_CHAVE">
+            
+            <label class="block text-sm font-medium mb-1 mt-2" for="model-name">Nome do Modelo</label>
+            <!-- Você pode trocar para um input text se preferir digitar livremente -->
+            <input type="text" id="model-name" placeholder="llama3.2">
+
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeSettings()" class="px-4 py-2 rounded border border-gray-600 hover:bg-gray-700">Cancelar</button>
+                <button onclick="saveSettings()" class="px-4 py-2 rounded bg-green-600 hover:bg-green-700 text-white font-medium">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configurações do Marked.js para destacar código usando highlight.js
+        marked.setOptions({
+            highlight: function(code, lang) {
+                const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                return hljs.highlight(code, { language }).value;
+            },
+            breaks: true // Permite quebras de linha normais do markdown
+        });
+
+        // Estado da Aplicação
+        let chatHistory = []; // Array de mensagens no formato OpenAI {role: 'user', content: '...'}
+        let isGenerating = false;
+
+        // Configurações padrão
+        const config = {
+            baseUrl: localStorage.getItem('localai_base_url') || 'http://localhost:8000/v1',
+            apiKey: localStorage.getItem('localai_api_key') || '',
+            model: localStorage.getItem('localai_model') || 'llama3.2'
+        };
+
+        // Elementos da DOM
+        const chatContainer = document.getElementById('chat-container');
+        const emptyState = document.getElementById('empty-state');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const settingsModal = document.getElementById('settings-modal');
+
+        // Inicializa configurações na interface
+        document.getElementById('base-url').value = config.baseUrl;
+        document.getElementById('api-key').value = config.apiKey;
+        document.getElementById('model-name').value = config.model;
+
+        // --- Funções de UI ---
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto'; // Reseta altura para recalcular
+            textarea.style.height = (textarea.scrollHeight <= 200 ? textarea.scrollHeight : 200) + 'px';
+        }
+
+        function handleKeyDown(event) {
+            // Envia com Enter (sem shift)
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault(); // Previne nova linha
+                sendMessage();
+            }
+        }
+
+        function openSettings() {
+            settingsModal.style.display = 'flex';
+        }
+
+        function closeSettings() {
+            settingsModal.style.display = 'none';
+        }
+
+        function saveSettings() {
+            config.baseUrl = document.getElementById('base-url').value.replace(/\/$/, ""); // Remove barra no final
+            config.apiKey = document.getElementById('api-key').value;
+            config.model = document.getElementById('model-name').value;
+
+            localStorage.setItem('localai_base_url', config.baseUrl);
+            localStorage.setItem('localai_api_key', config.apiKey);
+            localStorage.setItem('localai_model', config.model);
+
+            closeSettings();
+            
+            if(!config.apiKey || !config.baseUrl) {
+                showToast("Aviso: Configurações podem estar incompletas.");
+            } else {
+                showToast("Configurações salvas!");
+            }
+        }
+
+        // Função auxiliar para mostrar um toast simples (alert moderno)
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.style.position = 'fixed';
+            toast.style.bottom = '100px';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.backgroundColor = '#19c37d';
+            toast.style.color = 'white';
+            toast.style.padding = '0.5rem 1rem';
+            toast.style.borderRadius = '0.25rem';
+            toast.style.zIndex = '1000';
+            toast.style.transition = 'opacity 0.3s';
+            document.body.appendChild(toast);
+
+            setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+            setTimeout(() => { document.body.removeChild(toast); }, 2300);
+        }
+
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // --- Funções de Chat ---
+
+        function appendMessageDOM(role, content) {
+            // Remove estado vazio
+            if (emptyState.style.display !== 'none') {
+                emptyState.style.display = 'none';
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            const isUser = role === 'user';
+            const avatarClass = isUser ? 'avatar-user' : 'avatar-assistant';
+            const icon = isUser ? '<i class="fas fa-user text-white text-sm"></i>' : '<i class="fas fa-robot text-white text-sm"></i>';
+
+            messageDiv.innerHTML = `
+                <div class="avatar ${avatarClass}">
+                    ${icon}
+                </div>
+                <div class="content markdown-body">
+                    ${isUser ? escapeHTML(content) : marked.parse(content)}
+                </div>
+            `;
+
+            chatContainer.appendChild(messageDiv);
+            scrollToBottom();
+            return messageDiv.querySelector('.content'); // Retorna o elemento de conteúdo para atualizações de streaming
+        }
+
+        // Previne injeção HTML na mensagem do usuário
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag])
+            );
+        }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text || isGenerating) return;
+
+            // 1. Validar configurações
+            if (!config.baseUrl) {
+                openSettings();
+                showToast("Por favor, configure a Base URL primeiro.");
+                return;
+            }
+
+            // 2. Adicionar mensagem do usuário
+            userInput.value = '';
+            autoResize(userInput); // Volta ao tamanho original
+            
+            chatHistory.push({ role: 'user', content: text });
+            appendMessageDOM('user', text);
+
+            // 3. Preparar UI para recebimento
+            isGenerating = true;
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // Loading icon
+
+            const contentElement = appendMessageDOM('assistant', ''); // Começa vazio
+            contentElement.classList.add('cursor'); // Adiciona cursor piscando
+            
+            let fullResponseText = "";
+
+            try {
+                // 4. Chamada da API (Simulando o SDK, mas usando Fetch puro para suportar streaming web)
+                const response = await fetch(`${config.baseUrl}/chat/completions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${config.apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: config.model,
+                        messages: chatHistory,
+                        stream: true // Exigindo streaming conforme requisitado
+                    })
+                });
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(`Erro HTTP ${response.status}: ${errText}`);
+                }
+
+                // 5. Processamento do Stream
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let buffer = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    
+                    // O protocolo SSE (Server-Sent Events) usado pela OpenAI separa pedaços por \n\n
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); // Mantém o último fragmento incompleto no buffer
+
+                    for (const line of lines) {
+                        const trimmedLine = line.trim();
+                        if (trimmedLine === '') continue;
+                        if (trimmedLine === 'data: [DONE]') continue; // Sinal de término do stream
+
+                        if (trimmedLine.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(trimmedLine.slice(6)); // Remove "data: "
+                                
+                                // Extrai o conteúdo do delta (padrão OpenAI)
+                                const deltaContent = data.choices[0]?.delta?.content || "";
+                                
+                                if (deltaContent) {
+                                    fullResponseText += deltaContent;
+                                    // Atualiza o DOM (usa marked para renderizar o markdown em tempo real)
+                                    contentElement.innerHTML = marked.parse(fullResponseText);
+                                    
+                                    // Reaplica syntax highlight nos novos blocos de código
+                                    contentElement.querySelectorAll('pre code').forEach((el) => {
+                                        hljs.highlightElement(el);
+                                    });
+                                    
+                                    scrollToBottom();
+                                }
+                            } catch (e) {
+                                console.warn("Erro ao parsear chunk JSON:", trimmedLine, e);
+                            }
+                        }
+                    }
+                }
+                
+                // Adiciona a resposta completa ao histórico
+                chatHistory.push({ role: 'assistant', content: fullResponseText });
+
+            } catch (error) {
+                console.error("Erro na API:", error);
+                
+                let errorDetails = `Erro ao conectar com a API: ${error.message}`;
+                
+                if (error.message.includes('Failed to fetch')) {
+                    errorDetails = `
+                        <strong>Erro de Conexão (CORS ou Servidor Offline)</strong><br><br>
+                        O navegador bloqueou a requisição (TypeError: Failed to fetch). Isso geralmente ocorre por dois motivos:<br>
+                        <ol style="margin-top: 10px; margin-bottom: 10px;">
+                            <li><strong>Servidor desligado:</strong> Confirme se seu servidor de IA está rodando em <code>${config.baseUrl}</code></li>
+                            <li><strong>Bloqueio de CORS (Mais provável):</strong> Você abriu este arquivo via <code>file:///</code>. O navegador bloqueia isso por segurança.</li>
+                        </ol>
+                        <strong>Como resolver:</strong><br>
+                        <ul>
+                            <li><strong>No LM Studio:</strong> Vá na aba Local Server, ative "CORS" nas configurações.</li>
+                            <li><strong>No Ollama:</strong> Configure a variável de ambiente <code>OLLAMA_ORIGINS="*"</code> antes de iniciar.</li>
+                            <li><strong>Alternativa:</strong> Rode este HTML em um servidor local (ex: extensão <em>Live Server</em> do VSCode ou <code>python -m http.server</code>) em vez de dar duplo-clique no arquivo.</li>
+                        </ul>
+                    `;
+                }
+
+                contentElement.innerHTML = `<div style="color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 0.5rem; border: 1px solid rgba(239, 68, 68, 0.2);">${errorDetails}</div><br>Verifique suas configurações (ícone de engrenagem no canto superior).`;
+            } finally {
+                // 6. Limpeza e restauração da UI
+                contentElement.classList.remove('cursor');
+                isGenerating = false;
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+                userInput.focus();
+            }
+        }
+
+        // Foca no input ao carregar
+        window.onload = () => {
+            userInput.focus();
+            // Verifica se as configurações básicas existem
+            if (!config.baseUrl) {
+                openSettings();
+            }
+        };
+
+    </script>
+</body>
+</html>
