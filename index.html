@@ -3,576 +3,871 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Local IA</title>
-    
-    <!-- Tailwind CSS para estilização rápida -->
+    <title>Arkium Chat</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Marked.js para renderizar Markdown na resposta -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    
-    <!-- Highlight.js para destaque de sintaxe em blocos de código -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-
-    <!-- Font Awesome para ícones -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        arkium: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1', // Main brand color
+                            800: '#075985',
+                            900: '#0c4a6e',
+                            950: '#082f49',
+                        },
+                        dark: {
+                            bg: '#121212',
+                            panel: '#1E1E1E',
+                            border: '#2D2D2D',
+                            hover: '#2A2A2A',
+                            text: '#E0E0E0',
+                            muted: '#9CA3AF'
+                        }
+                    },
+                    animation: {
+                        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        /* Estilos personalizados para complementar o Tailwind */
-        body {
-            background-color: #343541; /* Cor de fundo escura clássica */
-            color: #ececf1;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
+        /* Custom Scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #121212;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2D2D2D;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3D3D3D;
         }
 
-        /* Área de mensagens */
-        .chat-container {
-            flex-grow: 1;
-            overflow-y: auto;
-            scroll-behavior: smooth;
-        }
-
-        /* Estilo das mensagens */
-        .message {
-            padding: 1.5rem;
-            display: flex;
-            gap: 1rem;
-            max-width: 48rem; /* max-w-3xl */
-            margin: 0 auto;
-        }
-
-        .message.user {
-            /* Sem fundo diferente para o usuário no design mais recente, mas mantendo distinção */
-        }
-
-        .message.assistant {
-            background-color: rgba(68, 70, 84, 0.5); /* Leve destaque para o bot */
-        }
-
-        .avatar {
-            width: 30px;
-            height: 30px;
-            border-radius: 0.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            font-weight: bold;
-        }
-
-        .avatar-user { background-color: #10a37f; } /* Verde OpenAI */
-        .avatar-assistant { background-color: #19c37d; }
-
-        .content {
-            width: 100%;
-            overflow-wrap: break-word;
-            line-height: 1.6;
-        }
-
-        /* Estilização específica do Markdown (Marked.js) */
-        .content pre {
-            background-color: #1e1e1e !important;
+        /* Basic Markdown Styling */
+        .prose pre {
+            background-color: #2D2D2D;
             padding: 1rem;
             border-radius: 0.5rem;
             overflow-x: auto;
             margin-top: 0.5rem;
             margin-bottom: 0.5rem;
+            border: 1px solid #3D3D3D;
         }
-        .content code {
-            font-family: 'Courier New', Courier, monospace;
-            background-color: rgba(255,255,255,0.1);
-            padding: 0.1rem 0.3rem;
+        .prose code {
+            background-color: #2D2D2D;
+            padding: 0.2rem 0.4rem;
             border-radius: 0.25rem;
-            font-size: 0.9em;
+            font-family: monospace;
+            font-size: 0.875em;
         }
-        .content pre code {
+        .prose pre code {
             background-color: transparent;
             padding: 0;
+            border-radius: 0;
         }
-        .content p { margin-bottom: 0.5rem; }
-        .content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.5rem; }
-        .content ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 0.5rem; }
-        .content a { color: #3b82f6; text-decoration: underline; }
-
-        /* Cursor de digitação durante o streaming */
-        .cursor::after {
-            content: '▋';
-            animation: blink 1s step-start infinite;
-            margin-left: 2px;
+        .prose p {
+            margin-bottom: 0.75rem;
         }
-        @keyframes blink { 50% { opacity: 0; } }
-
-        /* Área de input fixa na parte inferior */
-        .input-area {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            background: linear-gradient(180deg, rgba(52,53,65,0) 0%, #343541 50%);
-            padding: 2rem 1rem 1rem 1rem;
-            display: flex;
-            justify-content: center;
+        .prose p:last-child {
+            margin-bottom: 0;
+        }
+        .prose ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .prose ol {
+            list-style-type: decimal;
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .prose strong {
+            font-weight: bold;
+            color: #fff;
         }
 
-        .input-wrapper {
-            position: relative;
-            width: 100%;
-            max-width: 48rem;
-            background-color: #40414f;
-            border-radius: 0.75rem;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
-            border: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            align-items: center;
-            padding: 0.5rem 1rem;
+        /* Typing Indicator Animation */
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background-color: #9CA3AF;
+            border-radius: 50%;
+            display: inline-block;
+            animation: typing 1.4s infinite ease-in-out both;
         }
-
-        textarea {
-            width: 100%;
-            background: transparent;
-            border: none;
-            color: white;
-            resize: none;
-            outline: none;
-            max-height: 200px;
-            overflow-y: hidden;
-            padding-right: 2.5rem; /* Espaço para o botão enviar */
-            line-height: 1.5;
-        }
-
-        .send-btn {
-            position: absolute;
-            right: 0.75rem;
-            bottom: 0.75rem;
-            background-color: #19c37d;
-            color: white;
-            border: none;
-            border-radius: 0.375rem;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .send-btn:hover { background-color: #10a37f; }
-        .send-btn:disabled { background-color: #555; cursor: not-allowed; color: #888; }
-
-        /* Modal de Configurações */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(0,0,0,0.6);
-            z-index: 50;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal {
-            background-color: #202123;
-            padding: 2rem;
-            border-radius: 0.5rem;
-            width: 90%;
-            max-width: 500px;
-            border: 1px solid #444654;
-        }
-        .modal input, .modal select {
-            width: 100%;
-            padding: 0.5rem;
-            margin-top: 0.25rem;
-            margin-bottom: 1rem;
-            background-color: #343541;
-            border: 1px solid #565869;
-            color: white;
-            border-radius: 0.25rem;
-            outline: none;
-        }
-        .modal input:focus, .modal select:focus { border-color: #19c37d; }
-
-        /* Barra superior para configurações */
-        .top-bar {
-            position: absolute;
-            top: 0;
-            width: 100%;
-            padding: 1rem;
-            display: flex;
-            justify-content: flex-end;
-            z-index: 10;
-            background: linear-gradient(180deg, rgba(52,53,65,1) 0%, rgba(52,53,65,0) 100%);
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
         }
         
-        .settings-btn {
-            background: transparent;
-            color: #ececf1;
-            border: 1px solid rgba(255,255,255,0.2);
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: background 0.2s;
-        }
-        .settings-btn:hover { background-color: rgba(255,255,255,0.1); }
-
-        /* Estado vazio */
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            text-align: center;
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #121212;
+            color: #E0E0E0;
         }
 
+        /* Prevent auto-zoom on mobile inputs */
+        @media screen and (max-width: 768px) {
+            input, textarea, select {
+                font-size: 16px;
+            }
+        }
     </style>
 </head>
-<body>
+<body class="h-screen w-screen overflow-hidden flex bg-dark-bg text-dark-text selection:bg-arkium-500 selection:text-white">
 
-    <!-- Barra Superior -->
-    <div class="top-bar">
-        <button class="settings-btn" onclick="openSettings()">
-            <i class="fas fa-cog"></i> Configurações da API
-        </button>
-    </div>
-
-    <!-- Container Principal do Chat -->
-    <div class="w-full flex flex-col relative h-full">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-64 bg-dark-panel border-r border-dark-border flex flex-col h-full transition-transform duration-300 absolute md:relative z-20 -translate-x-full md:translate-x-0">
+        <div class="p-4 flex items-center justify-between border-b border-dark-border">
+            <h1 class="text-xl font-bold bg-gradient-to-r from-arkium-400 to-arkium-600 bg-clip-text text-transparent flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-arkium-500"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Arkium Chat
+            </h1>
+            <button id="closeSidebarBtn" class="md:hidden text-dark-muted hover:text-white p-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
         
-        <!-- Área de Mensagens -->
-        <div id="chat-container" class="chat-container pb-32 pt-16">
-            <div id="empty-state" class="empty-state">
-                <h1 class="text-4xl font-bold mb-4 opacity-50">Local IA Chat</h1>
-                <p class="opacity-50 max-w-md">Envie uma mensagem para começar. Certifique-se de configurar a API no botão superior direito.</p>
-            </div>
-            <!-- As mensagens serão injetadas aqui -->
+        <div class="p-3">
+            <button id="newChatBtn" class="w-full flex items-center justify-center gap-2 bg-transparent border border-dark-border hover:bg-dark-hover text-white py-2 px-4 rounded-lg transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Novo Chat
+            </button>
         </div>
 
-        <!-- Área de Input -->
-        <div class="input-area">
-            <div class="input-wrapper">
-                <textarea 
-                    id="user-input" 
-                    rows="1" 
-                    placeholder="Envie uma mensagem para a IA..." 
-                    oninput="autoResize(this)"
-                    onkeydown="handleKeyDown(event)"></textarea>
-                <button id="send-btn" class="send-btn" onclick="sendMessage()">
-                    <i class="fas fa-paper-plane"></i>
+        <div class="flex-1 overflow-y-auto p-3 space-y-1" id="chatList">
+            <!-- Chat items will be injected here -->
+        </div>
+
+        <div class="p-4 border-t border-dark-border space-y-2">
+            <button id="clearAllBtn" class="w-full flex items-center gap-2 text-sm text-red-400 hover:bg-red-400/10 p-2 rounded-md transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                Limpar Tudo
+            </button>
+            <button id="settingsBtn" class="w-full flex items-center gap-2 text-sm text-dark-muted hover:bg-dark-hover hover:text-white p-2 rounded-md transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                Configurações
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full relative">
+        <!-- Mobile Header -->
+        <header class="md:hidden flex items-center justify-between p-4 border-b border-dark-border bg-dark-panel z-10">
+            <button id="openSidebarBtn" class="text-dark-muted hover:text-white p-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+            <h1 class="text-lg font-semibold bg-gradient-to-r from-arkium-400 to-arkium-600 bg-clip-text text-transparent">Arkium Chat</h1>
+            <div class="w-6"></div> <!-- Spacer for flex balance -->
+        </header>
+
+        <!-- Messages Area -->
+        <div id="messagesArea" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth">
+            <!-- Welcome Screen (Visible when empty) -->
+            <div id="welcomeScreen" class="flex flex-col items-center justify-center h-full text-center space-y-6">
+                <div class="w-20 h-20 bg-dark-panel rounded-2xl flex items-center justify-center shadow-lg border border-dark-border">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-arkium-500"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">Bem-vindo ao Arkium Chat</h2>
+                    <p class="text-dark-muted max-w-md mx-auto">Como posso ajudar você hoje? Comece digitando uma mensagem abaixo ou configure sua API primeiro.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl mt-8">
+                    <button class="suggestion-btn bg-dark-panel border border-dark-border p-4 rounded-xl text-left hover:bg-dark-hover transition-colors">
+                        <span class="block text-sm font-medium">Escrever um código</span>
+                        <span class="block text-xs text-dark-muted mt-1">Crie um script em Python para...</span>
+                    </button>
+                    <button class="suggestion-btn bg-dark-panel border border-dark-border p-4 rounded-xl text-left hover:bg-dark-hover transition-colors">
+                        <span class="block text-sm font-medium">Resumir um texto</span>
+                        <span class="block text-xs text-dark-muted mt-1">Quais são os pontos principais sobre...</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Messages Container -->
+            <div id="chatHistory" class="hidden flex-col space-y-6 pb-20 w-full max-w-4xl mx-auto">
+                <!-- Messages injected here -->
+            </div>
+            
+            <!-- Stop Generation Button (Floating) -->
+            <div class="fixed bottom-24 left-1/2 -translate-x-1/2 z-10 transition-opacity duration-200 opacity-0 pointer-events-none" id="stopContainer">
+                <button id="stopBtn" class="flex items-center gap-2 bg-dark-panel border border-dark-border text-white px-4 py-2 rounded-full shadow-lg hover:bg-dark-hover text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                    Parar geração
                 </button>
             </div>
         </div>
-    </div>
 
-    <!-- Modal de Configurações -->
-    <div id="settings-modal" class="modal-overlay">
-        <div class="modal">
-            <h2 class="text-xl font-bold mb-4 flex justify-between items-center">
-                Configurações da API Local
-                <button onclick="closeSettings()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
-            </h2>
-            
-            <label class="block text-sm font-medium mb-1" for="base-url">Base URL (Endpoint V1)</label>
-            <input type="text" id="base-url" placeholder="http://localhost:8000/v1">
-            
-            <label class="block text-sm font-medium mb-1 mt-2" for="api-key">API Key (Bearer Token)</label>
-            <input type="password" id="api-key" placeholder="ark-SUA_CHAVE">
-            
-            <label class="block text-sm font-medium mb-1 mt-2" for="model-name">Nome do Modelo</label>
-            <!-- Você pode trocar para um input text se preferir digitar livremente -->
-            <input type="text" id="model-name" placeholder="llama3.2">
+        <!-- Input Area -->
+        <div class="p-4 bg-dark-bg border-t border-dark-border/50 relative">
+            <div class="max-w-4xl mx-auto relative flex items-end gap-2 bg-dark-panel border border-dark-border rounded-xl p-2 shadow-sm focus-within:border-arkium-500/50 focus-within:ring-1 focus-within:ring-arkium-500/50 transition-all">
+                <textarea 
+                    id="userInput" 
+                    class="flex-1 max-h-48 min-h-[44px] bg-transparent border-none focus:ring-0 resize-none px-3 py-3 text-sm md:text-base outline-none scrollbar-hide" 
+                    placeholder="Envie uma mensagem para Arkium..." 
+                    rows="1"
+                ></textarea>
+                <div class="flex flex-col justify-end pb-1">
+                    <button id="sendBtn" class="p-2 rounded-lg bg-arkium-600 text-white hover:bg-arkium-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center w-10 h-10" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="text-center mt-2 text-xs text-dark-muted">
+                Arkium Chat usa IA. Respostas podem não ser precisas. Mensagens: <span id="msgCount">0</span>
+            </div>
+        </div>
+    </main>
 
+    <!-- Mobile Overlay -->
+    <div id="mobileOverlay" class="fixed inset-0 bg-black/50 z-10 hidden md:hidden"></div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden backdrop-blur-sm">
+        <div class="bg-dark-panel border border-dark-border rounded-xl w-full max-w-md p-6 shadow-2xl transform scale-95 transition-transform duration-200">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-arkium-500"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    Configurações API
+                </h2>
+                <button id="closeSettingsBtn" class="text-dark-muted hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-dark-muted mb-1">URL Base (Endpoint)</label>
+                    <input type="text" id="apiUrl" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-arkium-500" placeholder="http://localhost:8000/v1/chat/completions">
+                    <p class="text-xs text-dark-muted mt-1">Ex: http://localhost:8000/v1/chat/completions</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-dark-muted mb-1">API Key</label>
+                    <input type="password" id="apiKey" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-arkium-500" placeholder="ark-xxxxxxxx...">
+                    <p class="text-xs text-dark-muted mt-1">Fica salva apenas no seu navegador local.</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-dark-muted mb-1">Modelo</label>
+                    <input type="text" id="apiModel" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-arkium-500" placeholder="llama3.2">
+                </div>
+            </div>
+            
             <div class="mt-6 flex justify-end gap-3">
-                <button onclick="closeSettings()" class="px-4 py-2 rounded border border-gray-600 hover:bg-gray-700">Cancelar</button>
-                <button onclick="saveSettings()" class="px-4 py-2 rounded bg-green-600 hover:bg-green-700 text-white font-medium">Salvar</button>
+                <button id="cancelSettingsBtn" class="px-4 py-2 rounded-lg border border-dark-border hover:bg-dark-hover transition-colors text-sm">Cancelar</button>
+                <button id="saveSettingsBtn" class="px-4 py-2 rounded-lg bg-arkium-600 hover:bg-arkium-500 text-white transition-colors text-sm">Salvar</button>
             </div>
         </div>
     </div>
 
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed top-4 right-4 bg-arkium-600 text-white px-4 py-2 rounded-lg shadow-lg transform transition-all duration-300 translate-y-[-150%] opacity-0 z-50 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        <span id="toastMsg"></span>
+    </div>
+
     <script>
-        // Configurações do Marked.js para destacar código usando highlight.js
-        marked.setOptions({
-            highlight: function(code, lang) {
-                const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-                return hljs.highlight(code, { language }).value;
-            },
-            breaks: true // Permite quebras de linha normais do markdown
-        });
-
-        // Estado da Aplicação
-        let chatHistory = []; // Array de mensagens no formato OpenAI {role: 'user', content: '...'}
-        let isGenerating = false;
-
-        // Configurações padrão
-        const config = {
-            baseUrl: localStorage.getItem('localai_base_url') || 'http://localhost:8000/v1',
-            apiKey: localStorage.getItem('localai_api_key') || '',
-            model: localStorage.getItem('localai_model') || 'llama3.2'
+        // --- Application State ---
+        let config = {
+            url: localStorage.getItem('arkium_url') || '',
+            key: localStorage.getItem('arkium_key') || '',
+            model: localStorage.getItem('arkium_model') || 'llama3.2'
         };
 
-        // Elementos da DOM
-        const chatContainer = document.getElementById('chat-container');
-        const emptyState = document.getElementById('empty-state');
-        const userInput = document.getElementById('user-input');
-        const sendBtn = document.getElementById('send-btn');
-        const settingsModal = document.getElementById('settings-modal');
+        let chats = JSON.parse(localStorage.getItem('arkium_chats')) || [];
+        let currentChatId = null;
+        let isGenerating = false;
+        let abortController = null;
 
-        // Inicializa configurações na interface
-        document.getElementById('base-url').value = config.baseUrl;
-        document.getElementById('api-key').value = config.apiKey;
-        document.getElementById('model-name').value = config.model;
-
-        // --- Funções de UI ---
-
-        function autoResize(textarea) {
-            textarea.style.height = 'auto'; // Reseta altura para recalcular
-            textarea.style.height = (textarea.scrollHeight <= 200 ? textarea.scrollHeight : 200) + 'px';
-        }
-
-        function handleKeyDown(event) {
-            // Envia com Enter (sem shift)
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault(); // Previne nova linha
-                sendMessage();
-            }
-        }
-
-        function openSettings() {
-            settingsModal.style.display = 'flex';
-        }
-
-        function closeSettings() {
-            settingsModal.style.display = 'none';
-        }
-
-        function saveSettings() {
-            config.baseUrl = document.getElementById('base-url').value.replace(/\/$/, ""); // Remove barra no final
-            config.apiKey = document.getElementById('api-key').value;
-            config.model = document.getElementById('model-name').value;
-
-            localStorage.setItem('localai_base_url', config.baseUrl);
-            localStorage.setItem('localai_api_key', config.apiKey);
-            localStorage.setItem('localai_model', config.model);
-
-            closeSettings();
+        // --- DOM Elements ---
+        const els = {
+            sidebar: document.getElementById('sidebar'),
+            mobileOverlay: document.getElementById('mobileOverlay'),
+            openSidebarBtn: document.getElementById('openSidebarBtn'),
+            closeSidebarBtn: document.getElementById('closeSidebarBtn'),
             
-            if(!config.apiKey || !config.baseUrl) {
-                showToast("Aviso: Configurações podem estar incompletas.");
-            } else {
-                showToast("Configurações salvas!");
-            }
+            newChatBtn: document.getElementById('newChatBtn'),
+            chatList: document.getElementById('chatList'),
+            clearAllBtn: document.getElementById('clearAllBtn'),
+            settingsBtn: document.getElementById('settingsBtn'),
+            
+            messagesArea: document.getElementById('messagesArea'),
+            welcomeScreen: document.getElementById('welcomeScreen'),
+            chatHistory: document.getElementById('chatHistory'),
+            
+            userInput: document.getElementById('userInput'),
+            sendBtn: document.getElementById('sendBtn'),
+            stopContainer: document.getElementById('stopContainer'),
+            stopBtn: document.getElementById('stopBtn'),
+            msgCount: document.getElementById('msgCount'),
+            
+            settingsModal: document.getElementById('settingsModal'),
+            apiUrl: document.getElementById('apiUrl'),
+            apiKey: document.getElementById('apiKey'),
+            apiModel: document.getElementById('apiModel'),
+            closeSettingsBtn: document.getElementById('closeSettingsBtn'),
+            cancelSettingsBtn: document.getElementById('cancelSettingsBtn'),
+            saveSettingsBtn: document.getElementById('saveSettingsBtn'),
+            
+            toast: document.getElementById('toast'),
+            toastMsg: document.getElementById('toastMsg'),
+            
+            suggestionBtns: document.querySelectorAll('.suggestion-btn')
+        };
+
+        // --- Utility Functions ---
+        
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
         }
 
-        // Função auxiliar para mostrar um toast simples (alert moderno)
         function showToast(message) {
-            const toast = document.createElement('div');
-            toast.textContent = message;
-            toast.style.position = 'fixed';
-            toast.style.bottom = '100px';
-            toast.style.left = '50%';
-            toast.style.transform = 'translateX(-50%)';
-            toast.style.backgroundColor = '#19c37d';
-            toast.style.color = 'white';
-            toast.style.padding = '0.5rem 1rem';
-            toast.style.borderRadius = '0.25rem';
-            toast.style.zIndex = '1000';
-            toast.style.transition = 'opacity 0.3s';
-            document.body.appendChild(toast);
-
-            setTimeout(() => { toast.style.opacity = '0'; }, 2000);
-            setTimeout(() => { document.body.removeChild(toast); }, 2300);
+            els.toastMsg.textContent = message;
+            els.toast.classList.remove('translate-y-[-150%]', 'opacity-0');
+            setTimeout(() => {
+                els.toast.classList.add('translate-y-[-150%]', 'opacity-0');
+            }, 3000);
         }
 
         function scrollToBottom() {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            els.messagesArea.scrollTop = els.messagesArea.scrollHeight;
         }
 
-        // --- Funções de Chat ---
+        function autoResizeTextarea() {
+            els.userInput.style.height = 'auto';
+            els.userInput.style.height = (els.userInput.scrollHeight) + 'px';
+            els.sendBtn.disabled = els.userInput.value.trim() === '';
+        }
 
-        function appendMessageDOM(role, content) {
-            // Remove estado vazio
-            if (emptyState.style.display !== 'none') {
-                emptyState.style.display = 'none';
-            }
-
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${role}`;
+        // Simple Markdown Parser
+        function parseMarkdown(text) {
+            if (!text) return '';
             
-            const isUser = role === 'user';
-            const avatarClass = isUser ? 'avatar-user' : 'avatar-assistant';
-            const icon = isUser ? '<i class="fas fa-user text-white text-sm"></i>' : '<i class="fas fa-robot text-white text-sm"></i>';
+            let html = text
+                // Escape HTML tags to prevent XSS
+                .replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                
+                // Code blocks ```code```
+                .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+                
+                // Inline code `code`
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                
+                // Bold **text**
+                .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                
+                // Lists (simple implementation)
+                .replace(/^\s*-\s+(.+)/gm, '<ul><li>$1</li></ul>')
+                .replace(/<\/ul>\n<ul>/g, '') // Merge adjacent lists
+                
+                // Paragraphs
+                .split('\n\n')
+                .map(p => p.trim() ? `<p>${p.replace(/\n/g, '<br>')}</p>` : '')
+                .join('');
+                
+            return html;
+        }
 
-            messageDiv.innerHTML = `
-                <div class="avatar ${avatarClass}">
-                    ${icon}
-                </div>
-                <div class="content markdown-body">
-                    ${isUser ? escapeHTML(content) : marked.parse(content)}
-                </div>
-            `;
 
-            chatContainer.appendChild(messageDiv);
+        // --- Core Logic ---
+
+        function init() {
+            renderChatList();
+            setupEventListeners();
+            
+            // If no chats, show welcome, otherwise load last chat
+            if (chats.length > 0) {
+                loadChat(chats[0].id);
+            } else {
+                showWelcome();
+            }
+            
+            // Show settings if not configured
+            if (!config.url || !config.key) {
+                setTimeout(openSettings, 500);
+            }
+        }
+
+        function saveChats() {
+            localStorage.setItem('arkium_chats', JSON.stringify(chats));
+            renderChatList();
+        }
+
+        function showWelcome() {
+            els.welcomeScreen.classList.remove('hidden');
+            els.chatHistory.classList.add('hidden');
+            els.chatHistory.innerHTML = '';
+            currentChatId = null;
+            updateMessageCount(0);
+        }
+
+        function createNewChat() {
+            if (isGenerating) return;
+            const newChat = {
+                id: generateId(),
+                title: 'Nova Conversa',
+                messages: [],
+                updatedAt: Date.now()
+            };
+            chats.unshift(newChat);
+            saveChats();
+            loadChat(newChat.id);
+            if (window.innerWidth < 768) toggleSidebar(); // Close sidebar on mobile
+        }
+
+        function loadChat(id) {
+            if (isGenerating) return;
+            currentChatId = id;
+            const chat = chats.find(c => c.id === id);
+            
+            if (!chat) return;
+
+            els.welcomeScreen.classList.add('hidden');
+            els.chatHistory.classList.remove('hidden');
+            els.chatHistory.classList.add('flex');
+            els.chatHistory.innerHTML = '';
+            
+            chat.messages.forEach(msg => appendMessage(msg.role, msg.content, false));
+            updateMessageCount(chat.messages.length);
             scrollToBottom();
-            return messageDiv.querySelector('.content'); // Retorna o elemento de conteúdo para atualizações de streaming
+            renderChatList(); // Update active state
+            
+            if (window.innerWidth < 768 && els.sidebar.classList.contains('translate-x-0')) {
+                toggleSidebar();
+            }
         }
 
-        // Previne injeção HTML na mensagem do usuário
-        function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, 
-                tag => ({
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    "'": '&#39;',
-                    '"': '&quot;'
-                }[tag])
-            );
+        function deleteChat(id, event) {
+            event.stopPropagation();
+            if (isGenerating) return;
+            
+            if (confirm('Excluir esta conversa?')) {
+                chats = chats.filter(c => c.id !== id);
+                saveChats();
+                if (currentChatId === id) {
+                    if (chats.length > 0) {
+                        loadChat(chats[0].id);
+                    } else {
+                        showWelcome();
+                    }
+                }
+            }
         }
 
-        async function sendMessage() {
-            const text = userInput.value.trim();
-            if (!text || isGenerating) return;
+        function renameChat(id, event) {
+            event.stopPropagation();
+            const chat = chats.find(c => c.id === id);
+            if (!chat) return;
+            
+            const newTitle = prompt('Novo nome da conversa:', chat.title);
+            if (newTitle !== null && newTitle.trim() !== '') {
+                chat.title = newTitle.trim();
+                saveChats();
+            }
+        }
 
-            // 1. Validar configurações
-            if (!config.baseUrl) {
-                openSettings();
-                showToast("Por favor, configure a Base URL primeiro.");
+        function clearAllChats() {
+            if (confirm('Tem certeza que deseja excluir todas as conversas? Isso não pode ser desfeito.')) {
+                chats = [];
+                saveChats();
+                showWelcome();
+            }
+        }
+
+        function updateMessageCount(count) {
+            els.msgCount.textContent = count;
+        }
+
+
+        function renderChatList() {
+            els.chatList.innerHTML = '';
+            
+            if (chats.length === 0) {
+                els.chatList.innerHTML = '<div class="text-sm text-dark-muted text-center p-4">Nenhuma conversa ainda.</div>';
                 return;
             }
 
-            // 2. Adicionar mensagem do usuário
-            userInput.value = '';
-            autoResize(userInput); // Volta ao tamanho original
-            
-            chatHistory.push({ role: 'user', content: text });
-            appendMessageDOM('user', text);
+            // Sort by updated
+            chats.sort((a, b) => b.updatedAt - a.updatedAt);
 
-            // 3. Preparar UI para recebimento
+            chats.forEach(chat => {
+                const isActive = chat.id === currentChatId;
+                const div = document.createElement('div');
+                div.className = `group flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${isActive ? 'bg-dark-hover text-white' : 'text-dark-muted hover:bg-dark-hover hover:text-white'}`;
+                div.onclick = () => loadChat(chat.id);
+                
+                div.innerHTML = `
+                    <div class="flex items-center gap-2 overflow-hidden w-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        <span class="truncate text-sm flex-1">${chat.title}</span>
+                    </div>
+                    <div class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button class="p-1 hover:text-arkium-400" onclick="renameChat('${chat.id}', event)" title="Renomear">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="16 3 21 8 8 21 3 21 3 16 16 3"></polygon></svg>
+                        </button>
+                        <button class="p-1 hover:text-red-400" onclick="deleteChat('${chat.id}', event)" title="Excluir">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
+                `;
+                els.chatList.appendChild(div);
+            });
+        }
+
+        function appendMessage(role, content, animate = false) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `flex gap-4 w-full ${role === 'user' ? 'flex-row-reverse' : ''}`;
+            
+            const avatar = role === 'user' 
+                ? `<div class="w-8 h-8 rounded-full bg-dark-hover border border-dark-border flex items-center justify-center shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                   </div>`
+                : `<div class="w-8 h-8 rounded-full bg-arkium-900 border border-arkium-700 flex items-center justify-center shrink-0 text-arkium-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                   </div>`;
+
+            const contentHtml = role === 'user' 
+                ? `<div class="bg-dark-panel border border-dark-border px-4 py-2.5 rounded-2xl max-w-[85%] whitespace-pre-wrap">${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`
+                : `<div class="prose prose-invert max-w-full w-full p-2 assistant-content">${parseMarkdown(content)}</div>
+                   <div class="flex items-center gap-2 mt-2 pl-2">
+                       <button class="text-dark-muted hover:text-white p-1 rounded transition-colors" onclick="copyText(this)" data-content="${encodeURIComponent(content)}" title="Copiar resposta">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                       </button>
+                   </div>`;
+
+            msgDiv.innerHTML = `${avatar}<div class="flex flex-col ${role === 'user' ? 'items-end' : 'items-start max-w-[85%]'}">${contentHtml}</div>`;
+            
+            els.chatHistory.appendChild(msgDiv);
+            if (animate) scrollToBottom();
+            
+            return msgDiv; // Return element to allow updating during streaming
+        }
+
+        async function copyText(btn) {
+            const text = decodeURIComponent(btn.getAttribute('data-content'));
+            try {
+                await navigator.clipboard.writeText(text);
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                setTimeout(() => btn.innerHTML = originalHtml, 2000);
+            } catch (err) {
+                // Fallback for document.execCommand if clipboard API fails
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    const originalHtml = btn.innerHTML;
+                    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                    setTimeout(() => btn.innerHTML = originalHtml, 2000);
+                } catch (e) {
+                    console.error('Fallback copy failed', e);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+
+        function createTypingIndicator() {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `flex gap-4 w-full id="typingIndicator"`;
+            msgDiv.innerHTML = `
+                <div class="w-8 h-8 rounded-full bg-arkium-900 border border-arkium-700 flex items-center justify-center shrink-0 text-arkium-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </div>
+                <div class="bg-transparent px-2 py-3 rounded-2xl flex items-center gap-1">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </div>
+            `;
+            els.chatHistory.appendChild(msgDiv);
+            scrollToBottom();
+            return msgDiv;
+        }
+
+
+        async function sendMessage() {
+            if (isGenerating) return;
+            
+            const text = els.userInput.value.trim();
+            if (!text) return;
+
+            if (!config.url || !config.key) {
+                openSettings();
+                showToast("Por favor, configure a API primeiro.");
+                return;
+            }
+
+            // Create new chat if welcome screen is showing
+            if (!currentChatId) {
+                const newChat = {
+                    id: generateId(),
+                    title: text.substring(0, 30) + (text.length > 30 ? '...' : ''),
+                    messages: [],
+                    updatedAt: Date.now()
+                };
+                chats.unshift(newChat);
+                currentChatId = newChat.id;
+                els.welcomeScreen.classList.add('hidden');
+                els.chatHistory.classList.remove('hidden');
+                els.chatHistory.classList.add('flex');
+            }
+
+            // Reset input
+            els.userInput.value = '';
+            els.userInput.style.height = 'auto';
+            els.sendBtn.disabled = true;
+
+            // Add user message to UI
+            appendMessage('user', text, true);
+            
+            // Get current chat
+            const chat = chats.find(c => c.id === currentChatId);
+            chat.messages.push({ role: 'user', content: text });
+            
+            // Auto update title if it's the first message
+            if (chat.messages.length === 1) {
+                chat.title = text.substring(0, 30) + (text.length > 30 ? '...' : '');
+            }
+            
+            chat.updatedAt = Date.now();
+            saveChats();
+            updateMessageCount(chat.messages.length);
+
+            // Prepare for AI response
             isGenerating = true;
-            sendBtn.disabled = true;
-            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // Loading icon
-
-            const contentElement = appendMessageDOM('assistant', ''); // Começa vazio
-            contentElement.classList.add('cursor'); // Adiciona cursor piscando
+            els.stopContainer.classList.remove('opacity-0', 'pointer-events-none');
+            const typingIndicator = createTypingIndicator();
             
-            let fullResponseText = "";
+            // Create a message placeholder for streaming
+            let currentAssistantMsg = '';
+            let aiMessageElement = null;
+            let contentContainer = null;
+            let copyBtn = null;
+
+            abortController = new AbortController();
 
             try {
-                // 4. Chamada da API (Simulando o SDK, mas usando Fetch puro para suportar streaming web)
-                const response = await fetch(`${config.baseUrl}/chat/completions`, {
+                // Prepare messages for API (excluding any UI specific data)
+                const apiMessages = chat.messages.map(m => ({
+                    role: m.role,
+                    content: m.content
+                }));
+
+                const response = await fetch(config.url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${config.apiKey}`
+                        'Authorization': `Bearer ${config.key}`
                     },
                     body: JSON.stringify({
                         model: config.model,
-                        messages: chatHistory,
-                        stream: true // Exigindo streaming conforme requisitado
-                    })
+                        messages: apiMessages,
+                        stream: true
+                    }),
+                    signal: abortController.signal
                 });
 
                 if (!response.ok) {
-                    const errText = await response.text();
-                    throw new Error(`Erro HTTP ${response.status}: ${errText}`);
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error?.message || `Erro HTTP: ${response.status}`);
                 }
 
-                // 5. Processamento do Stream
+                // Remove typing indicator once stream starts
+                typingIndicator.remove();
+                
+                // Create empty AI message element
+                aiMessageElement = appendMessage('assistant', '', false);
+                contentContainer = aiMessageElement.querySelector('.assistant-content');
+                copyBtn = aiMessageElement.querySelector('button');
+
                 const reader = response.body.getReader();
-                const decoder = new TextDecoder("utf-8");
-                let buffer = "";
+                const decoder = new TextDecoder('utf-8');
+                let buffer = '';
 
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
-                    
+
                     buffer += decoder.decode(value, { stream: true });
-                    
-                    // O protocolo SSE (Server-Sent Events) usado pela OpenAI separa pedaços por \n\n
                     const lines = buffer.split('\n');
-                    buffer = lines.pop(); // Mantém o último fragmento incompleto no buffer
+                    
+                    // Keep the last incomplete line in the buffer
+                    buffer = lines.pop();
 
                     for (const line of lines) {
-                        const trimmedLine = line.trim();
-                        if (trimmedLine === '') continue;
-                        if (trimmedLine === 'data: [DONE]') continue; // Sinal de término do stream
+                        if (line.trim() === '') continue;
+                        if (line.trim() === 'data: [DONE]') {
+                            // Stream finished
+                            continue;
+                        }
 
-                        if (trimmedLine.startsWith('data: ')) {
+                        if (line.startsWith('data: ')) {
                             try {
-                                const data = JSON.parse(trimmedLine.slice(6)); // Remove "data: "
-                                
-                                // Extrai o conteúdo do delta (padrão OpenAI)
-                                const deltaContent = data.choices[0]?.delta?.content || "";
-                                
-                                if (deltaContent) {
-                                    fullResponseText += deltaContent;
-                                    // Atualiza o DOM (usa marked para renderizar o markdown em tempo real)
-                                    contentElement.innerHTML = marked.parse(fullResponseText);
-                                    
-                                    // Reaplica syntax highlight nos novos blocos de código
-                                    contentElement.querySelectorAll('pre code').forEach((el) => {
-                                        hljs.highlightElement(el);
-                                    });
-                                    
+                                const data = JSON.parse(line.slice(6));
+                                if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
+                                    currentAssistantMsg += data.choices[0].delta.content;
+                                    // Update UI
+                                    contentContainer.innerHTML = parseMarkdown(currentAssistantMsg);
+                                    if (copyBtn) copyBtn.setAttribute('data-content', encodeURIComponent(currentAssistantMsg));
                                     scrollToBottom();
                                 }
                             } catch (e) {
-                                console.warn("Erro ao parsear chunk JSON:", trimmedLine, e);
+                                console.error("Error parsing stream data", e, line);
                             }
                         }
                     }
                 }
-                
-                // Adiciona a resposta completa ao histórico
-                chatHistory.push({ role: 'assistant', content: fullResponseText });
 
             } catch (error) {
-                console.error("Erro na API:", error);
+                if (typingIndicator.parentNode) typingIndicator.remove();
                 
-                let errorDetails = `Erro ao conectar com a API: ${error.message}`;
-                
-                if (error.message.includes('Failed to fetch')) {
-                    errorDetails = `
-                        <strong>Erro de Conexão (CORS ou Servidor Offline)</strong><br><br>
-                        O navegador bloqueou a requisição (TypeError: Failed to fetch). Isso geralmente ocorre por dois motivos:<br>
-                        <ol style="margin-top: 10px; margin-bottom: 10px;">
-                            <li><strong>Servidor desligado:</strong> Confirme se seu servidor de IA está rodando em <code>${config.baseUrl}</code></li>
-                            <li><strong>Bloqueio de CORS (Mais provável):</strong> Você abriu este arquivo via <code>file:///</code>. O navegador bloqueia isso por segurança.</li>
-                        </ol>
-                        <strong>Como resolver:</strong><br>
-                        <ul>
-                            <li><strong>No LM Studio:</strong> Vá na aba Local Server, ative "CORS" nas configurações.</li>
-                            <li><strong>No Ollama:</strong> Configure a variável de ambiente <code>OLLAMA_ORIGINS="*"</code> antes de iniciar.</li>
-                            <li><strong>Alternativa:</strong> Rode este HTML em um servidor local (ex: extensão <em>Live Server</em> do VSCode ou <code>python -m http.server</code>) em vez de dar duplo-clique no arquivo.</li>
-                        </ul>
-                    `;
+                if (error.name === 'AbortError') {
+                    // Handled manually
+                    if (!aiMessageElement && currentAssistantMsg === '') {
+                        aiMessageElement = appendMessage('assistant', '*Geração interrompida.*', true);
+                    }
+                } else {
+                    console.error("API Error:", error);
+                    appendMessage('assistant', `**Erro:** Não foi possível conectar à API.\n\nDetalhes: ${error.message}\n\nVerifique suas configurações.`, true);
+                    showToast("Erro ao comunicar com a API.");
                 }
-
-                contentElement.innerHTML = `<div style="color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 0.5rem; border: 1px solid rgba(239, 68, 68, 0.2);">${errorDetails}</div><br>Verifique suas configurações (ícone de engrenagem no canto superior).`;
             } finally {
-                // 6. Limpeza e restauração da UI
-                contentElement.classList.remove('cursor');
+                // Save final message to chat history
+                if (currentAssistantMsg) {
+                    chat.messages.push({ role: 'assistant', content: currentAssistantMsg });
+                    chat.updatedAt = Date.now();
+                    saveChats();
+                    updateMessageCount(chat.messages.length);
+                }
+                
                 isGenerating = false;
-                sendBtn.disabled = false;
-                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
-                userInput.focus();
+                els.stopContainer.classList.add('opacity-0', 'pointer-events-none');
+                abortController = null;
+                setTimeout(() => els.userInput.focus(), 10);
             }
         }
 
-        // Foca no input ao carregar
-        window.onload = () => {
-            userInput.focus();
-            // Verifica se as configurações básicas existem
-            if (!config.baseUrl) {
-                openSettings();
+
+        // --- Settings Management ---
+
+        function openSettings() {
+            els.apiUrl.value = config.url;
+            els.apiKey.value = config.key;
+            els.apiModel.value = config.model;
+            els.settingsModal.classList.remove('hidden');
+            // Small delay for transition
+            setTimeout(() => {
+                els.settingsModal.querySelector('div').classList.remove('scale-95');
+                els.settingsModal.querySelector('div').classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeSettings() {
+            els.settingsModal.querySelector('div').classList.remove('scale-100');
+            els.settingsModal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                els.settingsModal.classList.add('hidden');
+            }, 200);
+        }
+
+        function saveSettings() {
+            config.url = els.apiUrl.value.trim();
+            config.key = els.apiKey.value.trim();
+            config.model = els.apiModel.value.trim() || 'llama3.2';
+
+            localStorage.setItem('arkium_url', config.url);
+            localStorage.setItem('arkium_key', config.key);
+            localStorage.setItem('arkium_model', config.model);
+
+            closeSettings();
+            showToast("Configurações salvas com sucesso!");
+        }
+
+        // --- Sidebar Management (Mobile) ---
+
+        function toggleSidebar() {
+            const isClosed = els.sidebar.classList.contains('-translate-x-full');
+            if (isClosed) {
+                els.sidebar.classList.remove('-translate-x-full');
+                els.mobileOverlay.classList.remove('hidden');
+            } else {
+                els.sidebar.classList.add('-translate-x-full');
+                els.mobileOverlay.classList.add('hidden');
             }
-        };
+        }
+
+        // --- Event Listeners ---
+
+        function setupEventListeners() {
+            // Sidebar toggles
+            els.openSidebarBtn.addEventListener('click', toggleSidebar);
+            els.closeSidebarBtn.addEventListener('click', toggleSidebar);
+            els.mobileOverlay.addEventListener('click', toggleSidebar);
+
+            // Chat actions
+            els.newChatBtn.addEventListener('click', createNewChat);
+            els.clearAllBtn.addEventListener('click', clearAllChats);
+
+            // Settings
+            els.settingsBtn.addEventListener('click', openSettings);
+            els.closeSettingsBtn.addEventListener('click', closeSettings);
+            els.cancelSettingsBtn.addEventListener('click', closeSettings);
+            els.saveSettingsBtn.addEventListener('click', saveSettings);
+
+            // Input handling
+            els.userInput.addEventListener('input', autoResizeTextarea);
+            els.userInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!els.sendBtn.disabled) sendMessage();
+                }
+            });
+
+            els.sendBtn.addEventListener('click', sendMessage);
+
+            els.stopBtn.addEventListener('click', () => {
+                if (abortController) {
+                    abortController.abort();
+                    els.stopContainer.classList.add('opacity-0', 'pointer-events-none');
+                }
+            });
+
+            // Suggestions
+            els.suggestionBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const text = btn.querySelector('span.text-xs').textContent;
+                    els.userInput.value = text;
+                    autoResizeTextarea();
+                    els.userInput.focus();
+                });
+            });
+            
+            // Initial resize
+            autoResizeTextarea();
+        }
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', init);
 
     </script>
 </body>
