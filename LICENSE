@@ -1,0 +1,84 @@
+# Arkium Attribution License
+
+Copyright (c) 2026 Geilson Labs Projects
+
+## 1. Permission
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, subject to the conditions below.
+
+This permission includes, without limitation:
+
+* Personal use
+* Commercial use
+* Modification
+* Redistribution
+* Creation of derivative works
+* Integration into other software
+* Distribution of modified versions
+
+## 2. Attribution Requirement
+
+Any copy, redistribution, publication, or substantial portion of the Software,
+including modified or derivative versions, must retain clear and visible
+attribution to the original Arkium project and its original author.
+
+At minimum, the following attribution must remain present:
+
+> Arkium AI — originally developed by <SEU_NOME>
+
+The attribution may be included in the project's documentation, source code,
+About page, credits section, or another reasonable location that is clearly
+visible to users of the Software.
+
+## 3. Modified Versions
+
+You are permitted to modify the Software and distribute modified versions.
+
+Modified versions must:
+
+1. Clearly indicate that modifications have been made;
+2. Preserve the original Arkium attribution;
+3. Not falsely represent the modified version as the official, unmodified
+   Arkium project;
+4. Preserve this license or an equivalent attribution requirement.
+
+Example:
+
+> Based on Arkium AI, originally developed by <SEU_NOME>.
+> This version contains modifications by <MODIFIER_NAME>.
+
+## 4. Commercial Use
+
+Commercial use of the Software is permitted.
+
+You may use, modify, integrate, and distribute the Software as part of
+commercial products or services, provided that the attribution requirements
+of this license are respected.
+
+## 5. Trademarks and Branding
+
+This license does not grant permission to use the original author's personal
+name, trademarks, logos, artwork, or other branding in a way that suggests
+endorsement, sponsorship, or official affiliation with a modified version.
+
+The Arkium name and branding may only be represented as the original project
+when referring to the unmodified official Arkium project.
+
+## 6. No Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+OR OTHER DEALINGS IN THE SOFTWARE.
+
+## 7. Acceptance
+
+By using, modifying, copying, or distributing the Software, you agree to the
+terms and conditions of this license.
