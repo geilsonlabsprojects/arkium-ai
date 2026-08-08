@@ -39,10 +39,7 @@ pelos mantenedores do projeto.
 
 E-mail de segurança:
 
-**<EMAIL_DE_SEGURANCA>**
-
-> Substitua `<EMAIL_DE_SEGURANCA>` pelo endereço que você pretende utilizar
-> para receber relatórios de segurança.
+**<EM_BREVE>**
 
 ---
 
