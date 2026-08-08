@@ -849,7 +849,7 @@ Desenvolvido por **<Geilson_Labs_Projects>**.
 
 GitHub:
 
-**<SEU_GITHUB>**
+**<https://github.com/geilsonlabsprojects>**
 
 ---
 
