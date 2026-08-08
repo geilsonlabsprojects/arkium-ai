@@ -881,6 +881,6 @@ Para ambientes de produção, recomenda-se acompanhar as versões e alterações
 
 ## Copyright
 
-Copyright © 2026 **<Geilson_Labs_Projects>**
+Copyright © 2026 **Geilson Labs Projects**
 
 **Arkium AI — Plataforma local de IA compatível com a API da OpenAI.**
